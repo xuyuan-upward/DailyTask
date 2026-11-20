@@ -682,6 +682,14 @@ body {
   gap: 10px;
 }
 .data-btns .btn { flex: 1; }
+.import-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+}
 .data-hint {
   margin-top: 4px;
   font-size: 11px;

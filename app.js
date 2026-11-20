@@ -87,7 +87,6 @@ const baseUrlInput = $("baseUrlInput");
 const apiKeyInput = $("apiKeyInput");
 const modelInput = $("modelInput");
 const exportBtn = $("exportBtn");
-const importBtn = $("importBtn");
 const importFile = $("importFile");
 
 // ---------- 工具 ----------
@@ -883,7 +882,6 @@ function importData(file) {
 }
 
 exportBtn.addEventListener("click", exportData);
-importBtn.addEventListener("click", () => importFile.click());
 importFile.addEventListener("change", () => {
   if (importFile.files && importFile.files[0]) {
     importData(importFile.files[0]);
