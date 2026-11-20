@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>每日学习清单 · Study Planner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <main class="app">
+    <!-- 头部 -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">🎓</div>
+        <div>
+          <h1>每日学习清单</h1>
+          <p id="dateText" class="date-text"></p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="aiBtn" class="btn btn-ai">
+          <svg class="btn-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L19.7 10l-5.8 1.9L12 17.7l-1.9-5.8L4.3 10l5.8-1.2z"/></svg>
+          AI 分析
+        </button>
+        <button id="aiSettingsBtn" class="settings-btn" title="AI 模型配置">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button id="resetBtn" class="btn btn-ghost" title="清空当日所有任务">重置今日</button>
+      </div>
+    </header>
+
+    <!-- 日期导航 -->
+    <section class="date-nav">
+      <button id="prevDay" class="nav-arrow" title="前一天">‹</button>
+      <div class="date-nav-center">
+        <span id="dateNavText" class="date-nav-text">今天</span>
+        <input type="date" id="datePicker" class="date-picker" />
+      </div>
+      <button id="nextDay" class="nav-arrow" title="后一天">›</button>
+      <button id="todayBtn" class="btn btn-ghost today-btn">今天</button>
+    </section>
+
+    <!-- 进度卡片 -->
+    <section class="progress-card">
+      <div class="progress-ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-fg" cx="60" cy="60" r="52" id="ringFg"></circle>
+        </svg>
+        <div class="ring-center">
+          <span id="progressPct" class="pct">0%</span>
+          <span class="pct-label">完成度</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-num" id="statHours">0.0</span>
+          <span class="stat-label">今日学习 (小时)</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="statDone">0</span>
+          <span class="stat-label">已完成</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="statTotal">0</span>
+          <span class="stat-label">总任务</span>
+        </div>
+      </div>
+      <div class="goal">
+        <span>目标：</span>
+        <input type="number" id="goalHours" min="0" step="0.5" value="8" />
+        <span>小时 / 天</span>
+      </div>
+    </section>
+
+    <!-- 添加任务 -->
+    <section class="add-task">
+      <input type="text" id="taskInput" placeholder="今天要学点什么？例如：背 50 个英语单词…" maxlength="80" />
+      <div class="time-range">
+        <input type="time" id="startTime" value="09:00" title="开始时间" />
+        <span class="time-sep">→</span>
+        <input type="time" id="endTime" value="10:00" title="结束时间" />
+      </div>
+      <button id="addBtn" class="btn btn-primary">＋ 添加</button>
+    </section>
+
+    <!-- 任务列表 -->
+    <section class="task-list">
+      <ul id="taskList"></ul>
+      <div id="emptyState" class="empty-state">
+        <div class="empty-emoji">🌱</div>
+        <p>今天还没有学习任务</p>
+        <span>添加你的第一个目标，开始专注吧！</span>
+      </div>
+    </section>
+  </main>
+
+  <!-- AI 分析模态框 -->
+  <div id="aiModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">✨ AI 智能分析</span>
+        <button id="aiClose" class="icon-btn" title="关闭">✕</button>
+      </div>
+      <div class="modal-body" id="aiBody"></div>
+      <div class="modal-footer">
+        <button id="aiCloseBtn" class="btn btn-primary">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 模型配置模态框 -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal modal-settings">
+      <div class="modal-header">
+        <span class="modal-title">⚙️ AI 模型配置</span>
+        <button id="settingsClose" class="icon-btn" title="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="providerSelect">服务商</label>
+          <select id="providerSelect">
+            <option value="deepseek">DeepSeek（推荐）</option>
+            <option value="openai">OpenAI</option>
+            <option value="moonshot">Moonshot（Kimi）</option>
+            <option value="custom">自定义接口</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="baseUrlInput">API 地址（接口 URL）</label>
+          <input type="text" id="baseUrlInput" placeholder="https://api.deepseek.com/chat/completions" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="apiKeyInput">API Key</label>
+          <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="modelInput">模型名称</label>
+          <input type="text" id="modelInput" placeholder="deepseek-chat" autocomplete="off" />
+        </div>
+        <p class="form-hint">🔒 API Key 仅保存在你的浏览器本地（localStorage），不会上传到任何第三方服务器。请妥善保管，切勿在公共电脑上保存。</p>
+      </div>
+      <div class="modal-footer">
+        <button id="testBtn" class="btn btn-ghost">测试连接</button>
+        <button id="settingsSave" class="btn btn-primary">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
