@@ -86,11 +86,14 @@ const providerSelect = $("providerSelect");
 const baseUrlInput = $("baseUrlInput");
 const apiKeyInput = $("apiKeyInput");
 const modelInput = $("modelInput");
-const exportBtn = $("exportBtn");
-const importFile = $("importFile");
-const copyBtn = $("copyBtn");
-const pasteBtn = $("pasteBtn");
-const dataArea = $("dataArea");
+const exportDayBtn = $("exportDayBtn");
+const importDayBtn = $("importDayBtn");
+const importDayModal = $("importDayModal");
+const importDayClose = $("importDayClose");
+const importDayCancel = $("importDayCancel");
+const importDayConfirm = $("importDayConfirm");
+const importDayArea = $("importDayArea");
+const importDayTarget = $("importDayTarget");
 
 // ---------- 工具 ----------
 function uid() {
@@ -837,76 +840,36 @@ settingsModal.addEventListener("click", (e) => {
   if (e.target === settingsModal) closeSettings();
 });
 
-// ---------- 数据导出 / 导入 ----------
-function buildExportJSON() {
+// ---------- 当天数据导出 / 导入 ----------
+function buildDayJSON() {
+  const day = getDay(currentDate);
   return JSON.stringify(
-    { app: "dailyStudyPlanner", version: 2, exportedAt: new Date().toISOString(), days: store.days },
+    {
+      app: "dailyStudyPlanner",
+      type: "day",
+      date: currentDate,
+      tasks: day.tasks,
+      goal: day.goal,
+    },
     null,
     2
   );
 }
 
-// 通用导入：合并 days 并自动定位
-function applyImportedDays(days) {
-  if (!days || typeof days !== "object") {
-    throw new Error("数据格式不正确，未找到清单数据");
-  }
-  let count = 0;
-  let maxDate = "";
-  Object.keys(days).forEach((k) => {
-    if (days[k] && Array.isArray(days[k].tasks)) {
-      store.days[k] = days[k];
-      count++;
-      if (k > maxDate) maxDate = k;
-    }
-  });
-  saveStore();
-
-  // 导入后自动定位到有任务清单的日期：优先今天，否则最近有数据的一天
-  const today = todayStr();
-  if (store.days[today] && store.days[today].tasks.length > 0) {
-    currentDate = today;
-  } else if (maxDate) {
-    currentDate = maxDate;
-  }
-  render();
-  return count;
-}
-
-function importFromText(text) {
-  const data = JSON.parse(text);
-  const count = applyImportedDays(data.days);
-  alert(`✅ 导入成功，已合并 ${count} 天的学习清单数据\n已自动定位到：${currentDate}`);
-}
-
-function exportData() {
-  const blob = new Blob([buildExportJSON()], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `每日学习清单备份_${todayStr()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function copyData() {
-  const json = buildExportJSON();
-  dataArea.value = json;
+// 复制当天数据到剪贴板；失败时用文本框兜底
+function exportDay() {
+  const day = getDay(currentDate);
+  const json = buildDayJSON();
   const fallback = () => {
-    dataArea.focus();
-    dataArea.select();
-    try {
-      document.execCommand("copy");
-      alert("✅ 数据已复制到剪贴板，去云端粘贴后点「粘贴导入」");
-    } catch (e) {
-      alert("⚠️ 自动复制失败，请手动全选复制文本框里的内容");
-    }
+    // 打开导入模态框，把数据放进文本框供手动复制
+    importDayArea.value = json;
+    importDayTarget.textContent = currentDate;
+    importDayConfirm.textContent = "确认（数据已在下方，请手动复制后关闭）";
+    importDayModal.classList.add("show");
   };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(json).then(
-      () => alert("✅ 数据已复制到剪贴板，去云端粘贴后点「粘贴导入」"),
+      () => alert(`✅ 已复制「${currentDate}」当天的 ${day.tasks.length} 个任务，去云端点「导入当天」粘贴即可`),
       fallback
     );
   } else {
@@ -914,38 +877,60 @@ function copyData() {
   }
 }
 
-function importData(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      importFromText(e.target.result);
-    } catch (err) {
-      alert("❌ 导入失败：" + err.message);
-    }
-  };
-  reader.readAsText(file);
+function importDayFromText(text) {
+  const data = JSON.parse(text);
+  let date, tasks, goal;
+  if (data.type === "day" && data.date) {
+    date = data.date;
+    tasks = data.tasks;
+    goal = data.goal;
+  } else if (data.days) {
+    // 兼容旧的全量格式：只取当前查看那天
+    const d = data.days[currentDate];
+    if (!d) throw new Error("全量备份里没有「" + currentDate + "」这一天的数据");
+    date = currentDate;
+    tasks = d.tasks;
+    goal = d.goal;
+  } else {
+    throw new Error("数据格式无法识别，请使用「导出当天」得到的单日数据");
+  }
+  if (!Array.isArray(tasks)) throw new Error("任务数据格式错误");
+  store.days[date] = { tasks, goal: goal ?? 8 };
+  saveStore();
+  currentDate = date;
+  render();
+  alert(`✅ 已导入「${date}」的 ${tasks.length} 个任务`);
 }
 
-exportBtn.addEventListener("click", exportData);
-copyBtn.addEventListener("click", copyData);
-pasteBtn.addEventListener("click", () => {
-  const text = dataArea.value.trim();
+function openImportDay() {
+  importDayArea.value = "";
+  importDayTarget.textContent = currentDate;
+  importDayConfirm.textContent = "导入";
+  importDayModal.classList.add("show");
+}
+function closeImportDay() {
+  importDayModal.classList.remove("show");
+}
+
+exportDayBtn.addEventListener("click", exportDay);
+importDayBtn.addEventListener("click", openImportDay);
+importDayClose.addEventListener("click", closeImportDay);
+importDayCancel.addEventListener("click", closeImportDay);
+importDayConfirm.addEventListener("click", () => {
+  const text = importDayArea.value.trim();
   if (!text) {
-    alert("请先在上方文本框粘贴备份数据");
+    alert("请先粘贴当天数据");
     return;
   }
   try {
-    importFromText(text);
-    dataArea.value = "";
+    importDayFromText(text);
+    closeImportDay();
   } catch (err) {
     alert("❌ 导入失败：" + err.message);
   }
 });
-importFile.addEventListener("change", () => {
-  if (importFile.files && importFile.files[0]) {
-    importData(importFile.files[0]);
-    importFile.value = "";
-  }
+importDayModal.addEventListener("click", (e) => {
+  if (e.target === importDayModal) closeImportDay();
 });
 
 // ---------- 初始化 ----------

@@ -714,3 +714,16 @@ body {
   background: rgba(0, 212, 255, 0.06);
   border-color: rgba(0, 212, 255, 0.18);
 }
+
+/* 日期栏的当天导入/导出按钮 */
+.day-io { color: var(--accent-2); }
+.day-io:hover { background: rgba(0, 212, 255, 0.15); border-color: var(--accent-2); }
+
+/* 导入当天提示 */
+.import-day-tip {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.import-day-tip span { color: var(--accent-2); font-weight: 700; }

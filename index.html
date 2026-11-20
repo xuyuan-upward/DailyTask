@@ -42,6 +42,12 @@
       </div>
       <button id="nextDay" class="nav-arrow" title="后一天">›</button>
       <button id="todayBtn" class="btn btn-ghost today-btn">今天</button>
+      <button id="exportDayBtn" class="nav-arrow day-io" title="导出当天数据">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button id="importDayBtn" class="nav-arrow day-io" title="导入当天数据">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </button>
     </section>
 
     <!-- 进度卡片 -->
@@ -143,25 +149,28 @@
           <input type="text" id="modelInput" placeholder="deepseek-chat" autocomplete="off" />
         </div>
         <p class="form-hint">🔒 API Key 仅保存在你的浏览器本地（localStorage），不会上传到任何第三方服务器。请妥善保管，切勿在公共电脑上保存。</p>
-
-        <div class="form-group data-manage">
-          <label>数据备份与迁移</label>
-          <textarea id="dataArea" class="data-area" placeholder="在这里粘贴备份数据后点「粘贴导入」；或点「复制数据」把当前数据复制出来"></textarea>
-          <div class="data-btns">
-            <button id="copyBtn" class="btn btn-ghost btn-sm">📋 复制数据</button>
-            <button id="pasteBtn" class="btn btn-ghost btn-sm">📥 粘贴导入</button>
-          </div>
-          <div class="data-btns">
-            <button id="exportBtn" class="btn btn-ghost btn-sm">⬇ 导出文件</button>
-            <label for="importFile" class="btn btn-ghost btn-sm import-label">⬆ 导入文件</label>
-            <input type="file" id="importFile" accept=".json,application/json" style="display:none" />
-          </div>
-          <p class="form-hint data-hint">跨环境迁移：在 CodeBuddy 预览里点「复制数据」，到云端网站粘贴后点「粘贴导入」即可。</p>
-        </div>
       </div>
       <div class="modal-footer">
         <button id="testBtn" class="btn btn-ghost">测试连接</button>
         <button id="settingsSave" class="btn btn-primary">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导入当天数据模态框 -->
+  <div id="importDayModal" class="modal-overlay">
+    <div class="modal modal-settings">
+      <div class="modal-header">
+        <span class="modal-title">📥 导入当天数据</span>
+        <button id="importDayClose" class="icon-btn" title="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="import-day-tip">把在别处「导出当天」复制的数据粘贴到下面，将导入到当前查看的这一天（<span id="importDayTarget"></span>）。</p>
+        <textarea id="importDayArea" class="data-area" placeholder="粘贴当天数据 JSON …"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="importDayCancel" class="btn btn-ghost">取消</button>
+        <button id="importDayConfirm" class="btn btn-primary">导入</button>
       </div>
     </div>
   </div>
