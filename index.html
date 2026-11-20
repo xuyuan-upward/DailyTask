@@ -143,6 +143,16 @@
           <input type="text" id="modelInput" placeholder="deepseek-chat" autocomplete="off" />
         </div>
         <p class="form-hint">🔒 API Key 仅保存在你的浏览器本地（localStorage），不会上传到任何第三方服务器。请妥善保管，切勿在公共电脑上保存。</p>
+
+        <div class="form-group data-manage">
+          <label>数据备份与迁移</label>
+          <div class="data-btns">
+            <button id="exportBtn" class="btn btn-ghost btn-sm">⬇ 导出数据</button>
+            <button id="importBtn" class="btn btn-ghost btn-sm">⬆ 导入数据</button>
+            <input type="file" id="importFile" accept=".json,application/json" style="display:none" />
+          </div>
+          <p class="form-hint data-hint">用于把本地保存的清单搬到云端：在 localhost 页面「导出」得到 JSON 文件，再到云端网站「导入」即可。</p>
+        </div>
       </div>
       <div class="modal-footer">
         <button id="testBtn" class="btn btn-ghost">测试连接</button>

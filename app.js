@@ -86,6 +86,9 @@ const providerSelect = $("providerSelect");
 const baseUrlInput = $("baseUrlInput");
 const apiKeyInput = $("apiKeyInput");
 const modelInput = $("modelInput");
+const exportBtn = $("exportBtn");
+const importBtn = $("importBtn");
+const importFile = $("importFile");
 
 // ---------- 工具 ----------
 function uid() {
@@ -830,6 +833,62 @@ providerSelect.addEventListener("change", onProviderChange);
 testBtn.addEventListener("click", testConnection);
 settingsModal.addEventListener("click", (e) => {
   if (e.target === settingsModal) closeSettings();
+});
+
+// ---------- 数据导出 / 导入 ----------
+function exportData() {
+  const data = {
+    app: "dailyStudyPlanner",
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    days: store.days,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `每日学习清单备份_${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const days = data && data.days;
+      if (!days || typeof days !== "object") {
+        throw new Error("文件格式不正确，未找到清单数据");
+      }
+      let count = 0;
+      Object.keys(days).forEach((k) => {
+        if (days[k] && Array.isArray(days[k].tasks)) {
+          store.days[k] = days[k];
+          count++;
+        }
+      });
+      saveStore();
+      render();
+      alert(`✅ 导入成功，已合并 ${count} 天的学习清单数据`);
+    } catch (err) {
+      alert("❌ 导入失败：" + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+exportBtn.addEventListener("click", exportData);
+importBtn.addEventListener("click", () => importFile.click());
+importFile.addEventListener("change", () => {
+  if (importFile.files && importFile.files[0]) {
+    importData(importFile.files[0]);
+    importFile.value = "";
+  }
 });
 
 // ---------- 初始化 ----------

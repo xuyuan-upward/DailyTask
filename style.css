@@ -670,3 +670,21 @@ body {
   border-radius: 20px;
   padding: 3px 11px;
 }
+
+/* 数据迁移 */
+.data-manage {
+  border-top: 1px solid var(--card-border);
+  padding-top: 14px;
+  margin-top: 4px;
+}
+.data-btns {
+  display: flex;
+  gap: 10px;
+}
+.data-btns .btn { flex: 1; }
+.data-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  background: rgba(0, 212, 255, 0.06);
+  border-color: rgba(0, 212, 255, 0.18);
+}
