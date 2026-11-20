@@ -865,15 +865,26 @@ function importData(file) {
         throw new Error("文件格式不正确，未找到清单数据");
       }
       let count = 0;
+      let maxDate = "";
       Object.keys(days).forEach((k) => {
         if (days[k] && Array.isArray(days[k].tasks)) {
           store.days[k] = days[k];
           count++;
+          if (k > maxDate) maxDate = k;
         }
       });
       saveStore();
+
+      // 导入后自动定位到有任务清单的日期：优先今天，否则最近有数据的一天
+      const today = todayStr();
+      if (store.days[today] && store.days[today].tasks.length > 0) {
+        currentDate = today;
+      } else if (maxDate) {
+        currentDate = maxDate;
+      }
+
       render();
-      alert(`✅ 导入成功，已合并 ${count} 天的学习清单数据`);
+      alert(`✅ 导入成功，已合并 ${count} 天的学习清单数据\n已自动定位到：${currentDate}`);
     } catch (err) {
       alert("❌ 导入失败：" + err.message);
     }
