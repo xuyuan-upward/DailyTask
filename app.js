@@ -88,6 +88,9 @@ const apiKeyInput = $("apiKeyInput");
 const modelInput = $("modelInput");
 const exportBtn = $("exportBtn");
 const importFile = $("importFile");
+const copyBtn = $("copyBtn");
+const pasteBtn = $("pasteBtn");
+const dataArea = $("dataArea");
 
 // ---------- 工具 ----------
 function uid() {
@@ -835,16 +838,49 @@ settingsModal.addEventListener("click", (e) => {
 });
 
 // ---------- 数据导出 / 导入 ----------
-function exportData() {
-  const data = {
-    app: "dailyStudyPlanner",
-    version: 2,
-    exportedAt: new Date().toISOString(),
-    days: store.days,
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
+function buildExportJSON() {
+  return JSON.stringify(
+    { app: "dailyStudyPlanner", version: 2, exportedAt: new Date().toISOString(), days: store.days },
+    null,
+    2
+  );
+}
+
+// 通用导入：合并 days 并自动定位
+function applyImportedDays(days) {
+  if (!days || typeof days !== "object") {
+    throw new Error("数据格式不正确，未找到清单数据");
+  }
+  let count = 0;
+  let maxDate = "";
+  Object.keys(days).forEach((k) => {
+    if (days[k] && Array.isArray(days[k].tasks)) {
+      store.days[k] = days[k];
+      count++;
+      if (k > maxDate) maxDate = k;
+    }
   });
+  saveStore();
+
+  // 导入后自动定位到有任务清单的日期：优先今天，否则最近有数据的一天
+  const today = todayStr();
+  if (store.days[today] && store.days[today].tasks.length > 0) {
+    currentDate = today;
+  } else if (maxDate) {
+    currentDate = maxDate;
+  }
+  render();
+  return count;
+}
+
+function importFromText(text) {
+  const data = JSON.parse(text);
+  const count = applyImportedDays(data.days);
+  alert(`✅ 导入成功，已合并 ${count} 天的学习清单数据\n已自动定位到：${currentDate}`);
+}
+
+function exportData() {
+  const blob = new Blob([buildExportJSON()], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -855,36 +891,34 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
+function copyData() {
+  const json = buildExportJSON();
+  dataArea.value = json;
+  const fallback = () => {
+    dataArea.focus();
+    dataArea.select();
+    try {
+      document.execCommand("copy");
+      alert("✅ 数据已复制到剪贴板，去云端粘贴后点「粘贴导入」");
+    } catch (e) {
+      alert("⚠️ 自动复制失败，请手动全选复制文本框里的内容");
+    }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(
+      () => alert("✅ 数据已复制到剪贴板，去云端粘贴后点「粘贴导入」"),
+      fallback
+    );
+  } else {
+    fallback();
+  }
+}
+
 function importData(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const data = JSON.parse(e.target.result);
-      const days = data && data.days;
-      if (!days || typeof days !== "object") {
-        throw new Error("文件格式不正确，未找到清单数据");
-      }
-      let count = 0;
-      let maxDate = "";
-      Object.keys(days).forEach((k) => {
-        if (days[k] && Array.isArray(days[k].tasks)) {
-          store.days[k] = days[k];
-          count++;
-          if (k > maxDate) maxDate = k;
-        }
-      });
-      saveStore();
-
-      // 导入后自动定位到有任务清单的日期：优先今天，否则最近有数据的一天
-      const today = todayStr();
-      if (store.days[today] && store.days[today].tasks.length > 0) {
-        currentDate = today;
-      } else if (maxDate) {
-        currentDate = maxDate;
-      }
-
-      render();
-      alert(`✅ 导入成功，已合并 ${count} 天的学习清单数据\n已自动定位到：${currentDate}`);
+      importFromText(e.target.result);
     } catch (err) {
       alert("❌ 导入失败：" + err.message);
     }
@@ -893,6 +927,20 @@ function importData(file) {
 }
 
 exportBtn.addEventListener("click", exportData);
+copyBtn.addEventListener("click", copyData);
+pasteBtn.addEventListener("click", () => {
+  const text = dataArea.value.trim();
+  if (!text) {
+    alert("请先在上方文本框粘贴备份数据");
+    return;
+  }
+  try {
+    importFromText(text);
+    dataArea.value = "";
+  } catch (err) {
+    alert("❌ 导入失败：" + err.message);
+  }
+});
 importFile.addEventListener("change", () => {
   if (importFile.files && importFile.files[0]) {
     importData(importFile.files[0]);

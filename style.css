@@ -680,8 +680,26 @@ body {
 .data-btns {
   display: flex;
   gap: 10px;
+  margin-bottom: 8px;
 }
+.data-btns:last-of-type { margin-bottom: 0; }
 .data-btns .btn { flex: 1; }
+.data-area {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.data-area:focus { outline: none; border-color: var(--accent); }
+.data-area::placeholder { color: var(--text-dim); }
 .import-label {
   display: inline-flex;
   align-items: center;

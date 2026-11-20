@@ -146,12 +146,17 @@
 
         <div class="form-group data-manage">
           <label>数据备份与迁移</label>
+          <textarea id="dataArea" class="data-area" placeholder="在这里粘贴备份数据后点「粘贴导入」；或点「复制数据」把当前数据复制出来"></textarea>
           <div class="data-btns">
-            <button id="exportBtn" class="btn btn-ghost btn-sm">⬇ 导出数据</button>
-            <label for="importFile" class="btn btn-ghost btn-sm import-label">⬆ 导入数据</label>
+            <button id="copyBtn" class="btn btn-ghost btn-sm">📋 复制数据</button>
+            <button id="pasteBtn" class="btn btn-ghost btn-sm">📥 粘贴导入</button>
+          </div>
+          <div class="data-btns">
+            <button id="exportBtn" class="btn btn-ghost btn-sm">⬇ 导出文件</button>
+            <label for="importFile" class="btn btn-ghost btn-sm import-label">⬆ 导入文件</label>
             <input type="file" id="importFile" accept=".json,application/json" style="display:none" />
           </div>
-          <p class="form-hint data-hint">用于把本地保存的清单搬到云端：在 localhost 页面「导出」得到 JSON 文件，再到云端网站「导入」即可。</p>
+          <p class="form-hint data-hint">跨环境迁移：在 CodeBuddy 预览里点「复制数据」，到云端网站粘贴后点「粘贴导入」即可。</p>
         </div>
       </div>
       <div class="modal-footer">
