@@ -73,10 +73,9 @@ const todayBtn = $("todayBtn");
 const datePicker = $("datePicker");
 const dateNavText = $("dateNavText");
 const aiBtn = $("aiBtn");
-const aiModal = $("aiModal");
-const aiClose = $("aiClose");
-const aiCloseBtn = $("aiCloseBtn");
-const aiBody = $("aiBody");
+const analysisPanel = $("analysisPanel");
+const analysisContent = $("analysisContent");
+const analysisSource = $("analysisSource");
 const aiSettingsBtn = $("aiSettingsBtn");
 const settingsModal = $("settingsModal");
 const settingsClose = $("settingsClose");
@@ -399,6 +398,9 @@ function render() {
 
   // 日期导航
   renderDateNav();
+
+  // 当日 AI 分析
+  renderAnalysisPanel();
 }
 
 // ---------- 事件 ----------
@@ -485,159 +487,67 @@ function findFreeSlots(tasks) {
     .filter((f) => f.hours >= 0.25);
 }
 
-function runAnalysis() {
+// 本地精简分析：返回纯文本
+function buildLocalAnalysis() {
   const day = getDay(currentDate);
   const tasks = day.tasks;
   const total = tasks.length;
   const done = tasks.filter((t) => t.done).length;
   const undone = tasks.filter((t) => !t.done);
-  const rate = total === 0 ? 0 : Math.round((done / total) * 100);
   const hours = tasks.reduce((s, t) => s + t.hours, 0);
   const goal = day.goal || 0;
   const gap = goal - hours;
 
-  // 时间冲突
-  const conflicts = [];
+  if (total === 0) {
+    return "今天还没有安排学习任务，建议先规划一个可执行的小目标开始行动。";
+  }
+
+  const lines = [];
+  lines.push(`完成 ${done}/${total} 项（${Math.round((done / total) * 100)}%），累计 ${hours.toFixed(1)} 小时。`);
+  if (goal > 0) {
+    lines.push(gap > 0 ? `离目标还差 ${gap.toFixed(1)} 小时。` : `已达 ${goal} 小时目标 ✓`);
+  }
+
   for (let i = 0; i < tasks.length; i++) {
     for (let j = i + 1; j < tasks.length; j++) {
       if (isOverlap(tasks[i], tasks[j])) {
-        conflicts.push([tasks[i], tasks[j]]);
+        lines.push(`「${tasks[i].title}」与「${tasks[j].title}」时间重叠，需错开。`);
       }
     }
   }
 
-  // 空闲时段
-  const freeSlots = findFreeSlots(tasks);
-
-  // 整体统计（所有已保存日期）
-  const dates = Object.keys(store.days).sort();
-  let allTasks = 0, allDone = 0, allHours = 0;
-  dates.forEach((d) => {
-    const dd = store.days[d];
-    allTasks += dd.tasks.length;
-    allDone += dd.tasks.filter((t) => t.done).length;
-    allHours += dd.tasks.reduce((s, t) => s + t.hours, 0);
-  });
-  const avgRate = allTasks === 0 ? 0 : Math.round((allDone / allTasks) * 100);
-
-  // 生成建议
-  const suggestions = [];
-
-  undone.forEach((t, idx) => {
-    const slot = freeSlots[idx % freeSlots.length];
-    if (slot && slot.hours >= t.hours) {
-      suggestions.push({
-        type: "task",
-        ico: "📌",
-        text: `「${t.title}」尚未完成（需 ${t.hours} 小时），可安排在空档 ${slot.start} - ${slot.end}（约 ${slot.hours} 小时）内完成。`,
-      });
-    } else if (slot) {
-      suggestions.push({
-        type: "task",
-        ico: "📌",
-        text: `「${t.title}」尚未完成（需 ${t.hours} 小时），最近空档仅 ${slot.hours} 小时，建议拆分成多次完成。`,
-      });
-    } else {
-      suggestions.push({
-        type: "task",
-        ico: "📌",
-        text: `「${t.title}」尚未完成，今日时间已排满，建议延后至明天或压缩其他任务。`,
-      });
-    }
-  });
-
-  if (goal > 0 && hours > 0) {
-    if (gap > 0) {
-      suggestions.push({
-        type: "goal",
-        ico: "🎯",
-        text: `距离每日目标 ${goal} 小时还差 ${gap.toFixed(1)} 小时，建议利用空档补充学习内容。`,
-      });
-    } else {
-      suggestions.push({
-        type: "goal",
-        ico: "🎯",
-        text: `已达成每日 ${goal} 小时目标（实际 ${hours.toFixed(1)} 小时），继续保持！`,
-      });
-    }
-  }
-
-  conflicts.forEach(([a, b]) => {
-    suggestions.push({
-      type: "warn",
-      ico: "⚠️",
-      text: `「${a.title}」与「${b.title}」时间重叠，建议错开安排，避免冲突。`,
-    });
-  });
-
-  if (done > 0 && done === total && total > 0) {
-    suggestions.push({
-      type: "tip",
-      ico: "🎉",
-      text: "今日所有任务全部完成，表现非常出色！可以适当休息或预习明日内容。",
-    });
-  } else if (total === 0) {
-    suggestions.push({
-      type: "tip",
-      ico: "🌱",
-      text: "今天还没有安排学习任务，建议先规划一个可执行的小目标开始行动。",
+  if (undone.length > 0) {
+    const free = findFreeSlots(tasks);
+    undone.forEach((t, idx) => {
+      const slot = free[idx % free.length];
+      if (slot && slot.hours >= t.hours) {
+        lines.push(`「${t.title}」未完成，可安排 ${slot.start}-${slot.end}。`);
+      } else if (slot) {
+        lines.push(`「${t.title}」未完成，空档不足，建议拆分或延后。`);
+      } else {
+        lines.push(`「${t.title}」未完成，时间已满，建议延后。`);
+      }
     });
   }
 
-  return { total, done, rate, hours, goal, gap, undone, freeSlots, conflicts, suggestions, savedDays: dates.length, avgRate, allHours };
+  if (done === total && total > 0) {
+    lines.push("全部完成，很棒！可休息或预习明日。");
+  }
+
+  return lines.join("\n");
 }
 
-function renderAnalysis() {
-  const a = runAnalysis();
-  const isToday = currentDate === todayStr();
-  const dateLabel = isToday ? "今天" : currentDate;
-
-  let html = "";
-
-  // 总览卡片
-  html += `<div class="ai-overview">
-    <div class="ai-card"><div class="num">${a.savedDays}</div><div class="lbl">已记录天数</div></div>
-    <div class="ai-card"><div class="num">${a.allHours.toFixed(1)}h</div><div class="lbl">累计学习时长</div></div>
-    <div class="ai-card"><div class="num">${a.avgRate}%</div><div class="lbl">平均完成率</div></div>
-  </div>`;
-
-  // 当前日期分析
-  html += `<div class="ai-section">
-    <h4>📊 ${dateLabel}清单分析</h4>
-    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);">
-      <span>完成度</span><span>${a.rate}%</span>
-    </div>
-    <div class="ai-rate-bar"><div class="fill" style="width:${a.rate}%"></div></div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);">
-      <span>任务 ${a.total} 个 · 已完成 ${a.done} 个 · 未完成 ${a.undone.length} 个</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);">
-      <span>学习时长 ${a.hours.toFixed(1)}h / 目标 ${a.goal}h</span>
-      ${a.goal > 0 ? `<span>${a.gap > 0 ? "还差 " + a.gap.toFixed(1) + "h" : "已达标 ✓"}</span>` : ""}
-    </div>
-  </div>`;
-
-  // 空闲时段
-  if (a.freeSlots.length > 0) {
-    html += `<div class="ai-section">
-      <h4>🕐 空闲时段</h4>
-      ${a.freeSlots.map((f) => `<div class="sug-item tip"><span class="ico">⏳</span><span>${f.start} - ${f.end}（约 ${f.hours} 小时）</span></div>`).join("")}
-    </div>`;
-  }
-
-  // 建议
-  html += `<div class="ai-section">
-    <h4>💡 优化分配建议</h4>`;
-  if (a.suggestions.length === 0) {
-    html += `<div class="ai-empty"><div class="big">🌟</div><div>暂无建议，当前安排很合理</div></div>`;
+// 渲染当日分析到内嵌面板
+function renderAnalysisPanel() {
+  const day = getDay(currentDate);
+  const a = day.analysis;
+  if (a && a.text) {
+    analysisPanel.style.display = "block";
+    analysisContent.innerHTML = simpleMarkdown(a.text);
+    analysisSource.textContent = a.source === "local" ? "本地分析" : `${a.source} 生成`;
   } else {
-    html += a.suggestions
-      .map((s) => `<div class="sug-item ${s.type}"><span class="ico">${s.ico}</span><span>${s.text}</span></div>`)
-      .join("");
+    analysisPanel.style.display = "none";
   }
-  html += `</div>`;
-
-  aiBody.innerHTML = html;
 }
 
 // ---------- AI 模型配置 ----------
@@ -739,8 +649,8 @@ function buildMessages() {
     .join("\n");
   const isToday = currentDate === todayStr();
   const system =
-    "你是一名专业的学习规划教练，擅长分析每日学习清单并给出可执行的优化建议。请用简洁清晰的中文回答，使用要点列表，重点突出可落地的时间分配方案。";
-  const user = `请分析我${isToday ? "今天" : currentDate}的每日学习清单并给出建议：\n\n每日目标：${day.goal} 小时\n\n学习任务：\n${tasks || "（暂无任务）"}\n\n请从以下方面分析：\n1. 未完成的任务应该怎么安排、分配到哪个时间空档；\n2. 时间安排是否合理（是否有冲突、过于密集或空闲过多）；\n3. 距离目标时长还差多少小时、如何补足；\n4. 其他针对性的学习建议。`;
+    "你是学习规划教练。用简洁中文要点回答，每点一句话，总共不超过5点，直接给出可执行的分配建议，不要客套话。";
+  const user = `分析我${isToday ? "今天" : currentDate}的学习清单（目标 ${day.goal} 小时）：\n${tasks || "（暂无任务）"}\n\n重点：未完成任务如何分配到具体时间空档、时间是否冲突、离目标差多少、给1-2条具体建议。`;
   return [
     { role: "system", content: system },
     { role: "user", content: user },
@@ -782,54 +692,33 @@ function simpleMarkdown(text) {
     .replace(/\n+/g, "<br/>");
 }
 
-function renderAIResult(text) {
-  const providerName = (PROVIDERS[aiConfig.provider] || {}).name || "AI";
-  return `<span class="ai-source"><span class="dot"></span>由 ${providerName}（${aiConfig.model}）生成</span>
-    <div class="ai-content">${simpleMarkdown(text)}</div>`;
-}
+// ---------- 打开分析（内嵌并保存到当天） ----------
+async function openAnalysis() {
+  const day = getDay(currentDate);
+  analysisPanel.style.display = "block";
+  analysisSource.textContent = "分析中…";
+  analysisContent.innerHTML = `<div class="ai-loading"><div class="spinner"></div><div>分析中…</div></div>`;
 
-// ---------- 打开分析 ----------
-function openAnalysis() {
+  let text, source;
   if (aiConfig.apiKey && aiConfig.url) {
-    aiModal.classList.add("show");
-    aiBody.innerHTML =
-      `<div class="ai-loading"><div class="spinner"></div><div>正在调用 ${(PROVIDERS[aiConfig.provider] || {}).name || "AI"} 分析中…</div></div>`;
-    callAI()
-      .then((text) => {
-        aiBody.innerHTML = renderAIResult(text);
-      })
-      .catch((e) => {
-        // 调用失败，回退本地分析并提示
-        renderAnalysis();
-        aiBody.insertAdjacentHTML(
-          "afterbegin",
-          `<span class="ai-source local"><span class="dot"></span>AI 调用失败，已切换为本地分析：${escapeHtml(e.message)}</span>`
-        );
-      });
+    try {
+      text = await callAI();
+      source = (PROVIDERS[aiConfig.provider] || {}).name || "AI";
+    } catch (e) {
+      text = buildLocalAnalysis();
+      source = "本地分析";
+    }
   } else {
-    renderAnalysis();
-    aiBody.insertAdjacentHTML(
-      "afterbegin",
-      `<span class="ai-source local"><span class="dot"></span>本地智能分析（点击右上角 ⚙️ 配置 AI 模型可获得更智能建议）</span>`
-    );
-    aiModal.classList.add("show");
+    text = buildLocalAnalysis();
+    source = "本地分析";
   }
-}
 
-function escapeHtml(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function closeAnalysis() {
-  aiModal.classList.remove("show");
+  day.analysis = { text, source, time: new Date().toISOString() };
+  saveStore();
+  renderAnalysisPanel();
 }
 
 aiBtn.addEventListener("click", openAnalysis);
-aiClose.addEventListener("click", closeAnalysis);
-aiCloseBtn.addEventListener("click", closeAnalysis);
-aiModal.addEventListener("click", (e) => {
-  if (e.target === aiModal) closeAnalysis();
-});
 
 aiSettingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);

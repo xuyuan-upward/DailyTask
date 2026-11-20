@@ -103,21 +103,16 @@
         <span>添加你的第一个目标，开始专注吧！</span>
       </div>
     </section>
-  </main>
 
-  <!-- AI 分析模态框 -->
-  <div id="aiModal" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <span class="modal-title">✨ AI 智能分析</span>
-        <button id="aiClose" class="icon-btn" title="关闭">✕</button>
+    <!-- 当日 AI 分析（内嵌，随日期保存） -->
+    <section class="analysis-panel" id="analysisPanel" style="display:none">
+      <div class="analysis-header">
+        <span class="analysis-title">✨ 今日分析</span>
+        <span class="analysis-source" id="analysisSource"></span>
       </div>
-      <div class="modal-body" id="aiBody"></div>
-      <div class="modal-footer">
-        <button id="aiCloseBtn" class="btn btn-primary">知道了</button>
-      </div>
-    </div>
-  </div>
+      <div class="analysis-content" id="analysisContent"></div>
+    </section>
+  </main>
 
   <!-- AI 模型配置模态框 -->
   <div id="settingsModal" class="modal-overlay">

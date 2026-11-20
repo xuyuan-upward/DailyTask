@@ -727,3 +727,38 @@ body {
   margin-bottom: 10px;
 }
 .import-day-tip span { color: var(--accent-2); font-weight: 700; }
+
+/* 当日 AI 分析内嵌面板 */
+.analysis-panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 16px 18px;
+  margin-top: 16px;
+  box-shadow: var(--shadow);
+}
+.analysis-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.analysis-title { font-size: 14px; font-weight: 700; }
+.analysis-source {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 3px 11px;
+}
+.analysis-content {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
