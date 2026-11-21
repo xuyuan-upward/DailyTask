@@ -153,6 +153,8 @@ body {
 .stat:nth-child(1) .stat-num { color: var(--accent-2); }
 .stat:nth-child(2) .stat-num { color: var(--success); }
 .stat:nth-child(3) .stat-num { color: var(--accent); }
+.stat:nth-child(4) .stat-num { color: #ffca5c; }
+.stat-label { line-height: 1.4; }
 .stat-label { color: var(--text-dim); font-size: 13px; }
 
 .goal {

@@ -66,7 +66,6 @@ const startInput = $("startTime");
 const endInput = $("endTime");
 const addBtn = $("addBtn");
 const resetBtn = $("resetBtn");
-const goalInput = $("goalHours");
 const prevDayBtn = $("prevDay");
 const nextDayBtn = $("nextDay");
 const todayBtn = $("todayBtn");
@@ -441,7 +440,6 @@ function createEditItem(t) {
 // ---------- 渲染 ----------
 function render() {
   const day = getDay(currentDate);
-  goalInput.value = day.goal;
 
   // 列表（按开始时间升序排序，无时间项排最后）
   taskList.innerHTML = "";
@@ -491,11 +489,13 @@ function render() {
   const total = day.tasks.length;
   const done = day.tasks.filter((t) => t.done).length;
   const hours = day.tasks.reduce((s, t) => s + t.hours, 0);
+  const learned = day.tasks.filter((t) => t.done).reduce((s, t) => s + t.hours, 0);
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
 
   $("statTotal").textContent = total;
   $("statDone").textContent = done;
   $("statHours").textContent = hours.toFixed(1);
+  $("statLearned").textContent = learned.toFixed(1);
   $("progressPct").textContent = pct + "%";
 
   // 圆环
@@ -540,13 +540,6 @@ datePicker.addEventListener("change", () => {
 // 点击时间输入框任意位置即可弹出时间选择器
 bindTimePicker(startInput);
 bindTimePicker(endInput);
-
-goalInput.addEventListener("change", () => {
-  const day = getDay(currentDate);
-  day.goal = Math.max(0, parseFloat(goalInput.value) || 0);
-  saveStore();
-  render();
-});
 
 // ---------- AI 智能分析 ----------
 function fmtMin(min) {
@@ -604,18 +597,14 @@ function buildLocalAnalysis() {
   const done = tasks.filter((t) => t.done).length;
   const undone = tasks.filter((t) => !t.done);
   const hours = tasks.reduce((s, t) => s + t.hours, 0);
-  const goal = day.goal || 0;
-  const gap = goal - hours;
+  const learned = tasks.filter((t) => t.done).reduce((s, t) => s + t.hours, 0);
 
   if (total === 0) {
     return "今天还没有安排学习任务，建议先规划一个可执行的小目标开始行动。";
   }
 
   const lines = [];
-  lines.push(`完成 ${done}/${total} 项（${Math.round((done / total) * 100)}%），累计 ${hours.toFixed(1)} 小时。`);
-  if (goal > 0) {
-    lines.push(gap > 0 ? `离目标还差 ${gap.toFixed(1)} 小时。` : `已达 ${goal} 小时目标 ✓`);
-  }
+  lines.push(`预计学习 ${hours.toFixed(1)} 小时，已学习 ${learned.toFixed(1)} 小时（完成 ${done}/${total} 项，${Math.round((done / total) * 100)}%）。`);
 
   for (let i = 0; i < tasks.length; i++) {
     for (let j = i + 1; j < tasks.length; j++) {
@@ -759,7 +748,7 @@ function buildMessages() {
   const isToday = currentDate === todayStr();
   const system =
     "你是学习规划教练。用简洁中文要点回答，每点一句话，总共不超过5点，直接给出可执行的分配建议，不要客套话。";
-  const user = `分析我${isToday ? "今天" : currentDate}的学习清单（目标 ${day.goal} 小时）：\n${tasks || "（暂无任务）"}\n\n重点：未完成任务如何分配到具体时间空档、时间是否冲突、离目标差多少、给1-2条具体建议。`;
+  const user = `分析我${isToday ? "今天" : currentDate}的学习清单：\n${tasks || "（暂无任务）"}\n\n重点：未完成任务如何分配到具体时间空档、时间是否冲突、给1-2条具体建议。`;
   return [
     { role: "system", content: system },
     { role: "user", content: user },
