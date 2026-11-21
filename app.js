@@ -112,13 +112,13 @@ function calcHours(start, end) {
   return Math.round((diff / 60) * 100) / 100;
 }
 
-// 压缩图片并转为 base64（限制宽度，控制 localStorage 体积）
+// 压缩图片并转为 base64（适度压缩，保留文字清晰度）
 function compressImage(file, callback) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const img = new Image();
     img.onload = () => {
-      const maxW = 480;
+      const maxW = 1280;
       let w = img.width, h = img.height;
       if (w > maxW) {
         h = Math.round((h * maxW) / w);
@@ -128,7 +128,7 @@ function compressImage(file, callback) {
       canvas.width = w;
       canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      callback(canvas.toDataURL("image/jpeg", 0.72));
+      callback(canvas.toDataURL("image/jpeg", 0.9));
     };
     img.onerror = () => callback("");
     img.src = e.target.result;
