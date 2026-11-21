@@ -109,6 +109,30 @@ function calcHours(start, end) {
   return Math.round((diff / 60) * 100) / 100;
 }
 
+// 压缩图片并转为 base64（限制宽度，控制 localStorage 体积）
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 480;
+      let w = img.width, h = img.height;
+      if (w > maxW) {
+        h = Math.round((h * maxW) / w);
+        w = maxW;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = () => callback("");
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 // ---------- 任务操作 ----------
 function addTask() {
   const title = taskInput.value.trim();
@@ -125,7 +149,7 @@ function addTask() {
   }
 
   const day = getDay(currentDate);
-  day.tasks.push({ id: uid(), title, start, end, hours, done: false });
+  day.tasks.push({ id: uid(), title, start, end, hours, done: false, desc: "", image: "" });
   taskInput.value = "";
   saveStore();
   render();
@@ -227,6 +251,22 @@ function createTaskItem(t) {
   body.appendChild(title);
   body.appendChild(meta);
 
+  if (t.desc) {
+    const desc = document.createElement("div");
+    desc.className = "task-desc";
+    desc.textContent = t.desc;
+    body.appendChild(desc);
+  }
+  if (t.image) {
+    const img = document.createElement("img");
+    img.className = "task-image";
+    img.src = t.image;
+    img.alt = t.title;
+    img.title = "点击查看大图";
+    img.addEventListener("click", () => window.open(t.image, "_blank"));
+    body.appendChild(img);
+  }
+
   const actions = document.createElement("div");
   actions.className = "task-actions";
   const edit = document.createElement("button");
@@ -283,8 +323,71 @@ function createEditItem(t) {
   timeRow.appendChild(sep);
   timeRow.appendChild(endInput);
 
+  // 文字描述
+  const descInput = document.createElement("textarea");
+  descInput.className = "edit-input edit-desc";
+  descInput.value = t.desc || "";
+  descInput.placeholder = "添加文字描述（可选）…";
+  descInput.rows = 2;
+
+  // 图片描述
+  let imgData = t.image || "";
+  const imageWrap = document.createElement("div");
+  imageWrap.className = "edit-image-wrap";
+  const imagePreview = document.createElement("img");
+  imagePreview.className = "edit-image-preview";
+  const imgBtns = document.createElement("div");
+  imgBtns.className = "edit-image-btns";
+  const fileId = "imgFile_" + t.id;
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.id = fileId;
+  fileInput.accept = "image/*";
+  fileInput.style.display = "none";
+  const uploadLabel = document.createElement("label");
+  uploadLabel.className = "btn btn-ghost btn-sm";
+  uploadLabel.setAttribute("for", fileId);
+  uploadLabel.textContent = "🖼 添加图片";
+  const removeImgBtn = document.createElement("button");
+  removeImgBtn.type = "button";
+  removeImgBtn.className = "btn btn-ghost btn-sm";
+  removeImgBtn.textContent = "🗑 删除图片";
+
+  function updateImagePreview() {
+    if (imgData) {
+      imagePreview.src = imgData;
+      imagePreview.style.display = "block";
+      uploadLabel.textContent = "🖼 更换图片";
+      removeImgBtn.style.display = "";
+    } else {
+      imagePreview.style.display = "none";
+      imagePreview.src = "";
+      uploadLabel.textContent = "🖼 添加图片";
+      removeImgBtn.style.display = "none";
+    }
+  }
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    compressImage(file, (dataUrl) => {
+      imgData = dataUrl;
+      updateImagePreview();
+    });
+  });
+  removeImgBtn.addEventListener("click", () => {
+    imgData = "";
+    updateImagePreview();
+  });
+  imageWrap.appendChild(imagePreview);
+  imgBtns.appendChild(uploadLabel);
+  imgBtns.appendChild(removeImgBtn);
+  imageWrap.appendChild(imgBtns);
+  updateImagePreview();
+
   body.appendChild(titleInput);
   body.appendChild(timeRow);
+  body.appendChild(descInput);
+  body.appendChild(imageWrap);
 
   const actions = document.createElement("div");
   actions.className = "edit-actions";
@@ -312,6 +415,8 @@ function createEditItem(t) {
     t.start = start;
     t.end = end;
     t.hours = hours;
+    t.desc = descInput.value.trim();
+    t.image = imgData;
     editingId = null;
     saveStore();
     render();
