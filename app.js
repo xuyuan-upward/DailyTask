@@ -93,6 +93,9 @@ const importDayCancel = $("importDayCancel");
 const importDayConfirm = $("importDayConfirm");
 const importDayArea = $("importDayArea");
 const importDayTarget = $("importDayTarget");
+const imageModal = $("imageModal");
+const imageModalImg = $("imageModalImg");
+const imageModalClose = $("imageModalClose");
 
 // ---------- 工具 ----------
 function uid() {
@@ -263,7 +266,7 @@ function createTaskItem(t) {
     img.src = t.image;
     img.alt = t.title;
     img.title = "点击查看大图";
-    img.addEventListener("click", () => window.open(t.image, "_blank"));
+    img.addEventListener("click", () => openImage(t.image));
     body.appendChild(img);
   }
 
@@ -926,6 +929,22 @@ importDayConfirm.addEventListener("click", () => {
 });
 importDayModal.addEventListener("click", (e) => {
   if (e.target === importDayModal) closeImportDay();
+});
+
+// ---------- 图片预览灯箱 ----------
+function openImage(src) {
+  imageModalImg.src = src;
+  imageModal.classList.add("show");
+}
+function closeImage() {
+  imageModal.classList.remove("show");
+}
+imageModalClose.addEventListener("click", closeImage);
+imageModal.addEventListener("click", (e) => {
+  if (e.target === imageModal) closeImage();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeImage();
 });
 
 // ---------- 初始化 ----------

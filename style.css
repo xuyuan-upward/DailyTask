@@ -807,3 +807,40 @@ body {
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* 图片预览灯箱 */
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 6, 18, 0.88);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.image-lightbox.show { display: flex; }
+.image-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.image-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.image-close:hover { background: rgba(255, 107, 139, 0.5); }
