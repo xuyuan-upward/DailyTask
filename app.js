@@ -381,6 +381,7 @@ function createEditItem(t) {
   imageWrap.appendChild(imagePreview);
   imgBtns.appendChild(uploadLabel);
   imgBtns.appendChild(removeImgBtn);
+  imgBtns.appendChild(fileInput);
   imageWrap.appendChild(imgBtns);
   updateImagePreview();
 
